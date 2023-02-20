@@ -51,6 +51,9 @@ func Conf() {
 
 	// créer le fichier de configuration s'il n'existe pas
 	configFilePath = configDir + "/config.yaml"
+	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
+		os.Create(configFilePath)
+	}
 	vp := viper.New()
 
 	//Définir le chemin de téléchargement par défaut
@@ -60,7 +63,7 @@ func Conf() {
 	} else {
 		dldPath = home + "/Downloads" //Sinon on télécharge dans le dossier Downloads
 	}
-	//Données par défaut du fichier de configuration
+	// Initialise la configuration
 	config := map[string]interface{}{
 		"cli.clipboard": true,
 		"cli.dld":       dldPath,
@@ -71,18 +74,11 @@ func Conf() {
 		"cli.qrcode":    true,
 		"cli.history":   true,
 		"cli.update":    true,
-		"cli.notfound":  true,
 		"cli.lastmsg":   time.Time{},
+		"cli.command":   os.Args[0],
 	}
-	//Si le fichier de configuration n'existe pas on le crée et on y ajoute les données par défaut
-	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
-		os.Create(configFilePath)
 
-		for key, value := range config {
-			vp.Set(key, value)
-		}
-
-	}
+	// Lit la configuration existante
 	vp.SetConfigName("config")
 	vp.SetConfigType("yaml")
 	vp.AddConfigPath(configDir)
@@ -91,6 +87,21 @@ func Conf() {
 		red.Println(err)
 		os.Exit(0)
 	}
+
+	// Vérifie si toutes les clés de configuration existent et ajoute les valeurs par défaut si nécessaire
+	for key, value := range config {
+		if !vp.IsSet(key) {
+			vp.Set(key, value)
+		}
+	}
+
+	// Écrit la configuration
+	err = vp.WriteConfig()
+	if err != nil {
+		red.Println("Impossible d'écrire la configuration :", err)
+		os.Exit(0)
+	}
+
 	var (
 		currentDate    = time.Now()
 		difference     = currentDate.Sub(vp.GetTime("cli.lastmsg"))

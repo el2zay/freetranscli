@@ -12,17 +12,26 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // uninstallCmd represents the uninstall command
 var uninstallCmd = &cobra.Command{
 	Use:   "uninstall",
 	Short: "Désinstalle HiberCli",
-	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
+		vp := viper.New()
+		vp.SetConfigName("config")
+		vp.SetConfigType("yaml")
+		vp.AddConfigPath(configDir)
+		err := vp.ReadInConfig()
+		if err != nil {
+			red.Println(err)
+			os.Exit(0)
+		}
 		//Définir hibercliSize comme une variable globale
 		var hibercliSize int64
-		path, _ := exec.LookPath("hibercli")
+		path, _ := exec.LookPath(vp.GetString("cli.command"))
 		//Vérifier la taille du fichier de configuration
 		config, err := os.Stat(configDir)
 		//Si il y a une erreur ne pas le calculer
@@ -80,12 +89,12 @@ var uninstallCmd = &cobra.Command{
 					err := os.RemoveAll(os.TempDir() + "/HiberCLI_temp/")
 					if err != nil {
 						s.Stop()
-						red.Println("Erreur lors de la suppression du dossier temporaire :" , err, "PATH : ", os.TempDir()+"/HiberCLI_temp/")
+						red.Println("Erreur lors de la suppression du dossier temporaire :", err, "PATH : ", os.TempDir()+"/HiberCLI_temp/")
 						os.Exit(0)
 					}
 				}
 				bmagenta.Sprint("Suppression de HiberCLI" + "  ")
-				path, err := exec.LookPath("hibercli")
+				path, err := exec.LookPath(vp.GetString("cli.command"))
 				if err != nil {
 					s.Stop()
 					red.Println("HiberCli n'a pas été détecté sur votre système.")

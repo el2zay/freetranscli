@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"runtime"
 	"strconv"
 	"strings"
@@ -113,11 +114,12 @@ Paramétrer et personnaliser le client, pour le moment vous pouvez changer le do
 						histchoice,
 						updatechoice,
 						notfoundchoice,
+						"Modifier le nom de la commande",
 						red.Sprint("Effacer l'historique"),
 						red.Sprint("Réinitialiser la configuration"),
 						red.Sprint("Désinstaller HiberCLI"),
 					},
-					PageSize: 13,
+					PageSize: 14,
 				}
 			} else {
 				inquirer = &survey.Select{
@@ -130,11 +132,12 @@ Paramétrer et personnaliser le client, pour le moment vous pouvez changer le do
 						histchoice,
 						updatechoice,
 						notfoundchoice,
+						"Modifier le nom de la commande",
 						red.Sprint("Effacer l'historique"),
 						red.Sprint("Réinitialiser la configuration"),
 						red.Sprint("Désinstaller HiberCLI"),
 					},
-					PageSize: 10,
+					PageSize: 11,
 				}
 			}
 			err := survey.AskOne(inquirer, &choice)
@@ -307,8 +310,42 @@ Paramétrer et personnaliser le client, pour le moment vous pouvez changer le do
 				vp.Set("cli.update", !vp.GetBool("cli.update"))
 			}
 
-			if choice == notfoundchoice{
+			if choice == notfoundchoice {
 				vp.Set("cli.notfound", !vp.GetBool("cli.notfound"))
+			}
+
+			if choice == "Modifier le nom de la commande" {
+				hiberclipath, err := exec.LookPath("hibercli")
+				if err == os.ErrNotExist {
+					red.Println("Erreur : Impossible de trouver hibercli.")
+					continue
+				} else if err != nil {
+					red.Println(err)
+					continue
+				}
+				var askname string
+				prompt := &survey.Input{
+					Message: "Nouveau nom de la commande :",
+				}
+				survey.AskOne(prompt, &askname)
+				if len(askname) == 0 {
+					continue
+				}
+				//vérifier si le nom de la commande est déjà utilisé
+				_, err = exec.LookPath(askname)
+				if err == nil {
+					red.Println("Erreur : Ce nom de commande ne peut pas être utilisée", err)
+					continue
+				}
+				//renommer la commande en remplaçant hibercli par le nouveau nom
+				newname := strings.Replace(hiberclipath, "hibercli", askname, 1)
+				err = os.Rename(hiberclipath, newname)
+				if err != nil {
+					red.Println("Erreur : Impossible de renommer la commande", err)
+					continue
+				}
+				green.Println("La commande a été renommée")
+				vp.Set("cli.command", askname) //changer le nom de la commande dans le fichier de config
 			}
 
 			if choice == red.Sprint("Effacer l'historique") {
@@ -323,7 +360,6 @@ Paramétrer et personnaliser le client, pour le moment vous pouvez changer le do
 				}
 				survey.AskOne(prompt, &delchoice)
 				if delchoice {
-					err := os.Remove(historicfile)
 					if err != nil {
 						red.Println("Erreur : Impossible d'effacer l'historique")
 						continue

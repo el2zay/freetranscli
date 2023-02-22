@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"runtime"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/mdp/qrterminal"
 	"github.com/spf13/cobra"
 )
@@ -37,9 +38,22 @@ Si vous n'avez pas de navigateur web l'url s'affichera dans la console.
 Si vous n'avez pas de compte GitHub vous pouvez en créé un gratuitement sur https://github.com/signup`,
 
 	Run: func(cmd *cobra.Command, args []string) {
+		//Demander le titre
+		var title string
+		prompt := &survey.Input{
+			Message: "Titre de l'issue:",
+		}
+		survey.AskOne(prompt, &title)
 
-		//faire comme la commande go bug
-		openbrowser("https://github.com/el2zay")
+		//Demander la description avec survey en multi ligne
+		var description string
+		multiline := &survey.Multiline{
+			Message: "Description de l'issue:",
+		}
+		survey.AskOne(multiline, &description)
+
+		//Ouvrir le site d'issue avec le titre et la description
+		openbrowser("https://github.com/el2zay/hibercli/issues/new?title=" + title + "&body=" + description)
 	},
 }
 

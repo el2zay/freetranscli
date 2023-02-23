@@ -2,21 +2,16 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"os/exec"
 	"runtime"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/terminal"
-	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
 	"github.com/gen2brain/beeep"
 	"github.com/inancgumus/screen"
-	"github.com/mdp/qrterminal"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -105,7 +100,6 @@ Paramétrer et personnaliser le client, pour le moment vous pouvez changer le do
 					Message: "Quel paramètre ? " + color.HiBlackString("(CTRL+C pour quitter)"),
 					Options: []string{
 						"Choisir le dossier de téléchargement par défaut",
-						"Choisir un spinner",
 						notifychoice,
 						soundchoice,
 						iconchoice,
@@ -126,7 +120,6 @@ Paramétrer et personnaliser le client, pour le moment vous pouvez changer le do
 					Message: "Quel paramètre ?" + color.HiBlackString("(CTRL+C pour quitter)a"),
 					Options: []string{
 						"Choisir le dossier de téléchargement par défaut",
-						"Choisir un spinner",
 						clipchoice,
 						qrchoice,
 						histchoice,
@@ -186,48 +179,48 @@ Paramétrer et personnaliser le client, pour le moment vous pouvez changer le do
 
 				green.Println("Le dossier de téléchargement par défaut a été changé avec succès !")
 			}
-			if choice == "Choisir un spinner" {
-				spinchoice := true
-				prompt := &survey.Confirm{
-					Message: "Pour choisir un spinner le programme doit ouvrir votre navigateur web. (n pour afficher un QRcode)",
-					Default: true,
-				}
-				survey.AskOne(prompt, &spinchoice)
-				if spinchoice {
-					openbrowser("https://github.com/briandowns/spinner#available-character-sets")
-				} else {
-					qrterminal.GenerateHalfBlock(("https://github.com/briandowns/spinner#available-character-sets"), qrterminal.M, os.Stdout)
-					fmt.Print("https://github.com/briandowns/spinner#available-character-sets\n\n")
+			// if choice == "Choisir un spinner" {
+			// 	spinchoice := true
+			// 	prompt := &survey.Confirm{
+			// 		Message: "Pour choisir un spinner le programme doit ouvrir votre navigateur web. (n pour afficher un QRcode)",
+			// 		Default: true,
+			// 	}
+			// 	survey.AskOne(prompt, &spinchoice)
+			// 	if spinchoice {
+			// 		openbrowser("https://github.com/briandowns/spinner#available-character-sets")
+			// 	} else {
+			// 		qrterminal.GenerateHalfBlock(("https://github.com/briandowns/spinner#available-character-sets"), qrterminal.M, os.Stdout)
+			// 		fmt.Print("https://github.com/briandowns/spinner#available-character-sets\n\n")
 
-				}
-				cyan.Print("Quel est l'index du spinner que vous voulez utiliser ? (0 à 43) ")
-				var spin string
-				fmt.Scanln(&spin)
-				//Vérifier si le spinner est vide
-				if len(spin) == 0 {
-					red.Println("Erreur : Vous devez spécifier un spinner")
-					continue
-				}
-				//convertir le string en int
-				spinint, err := strconv.Atoi(spin)
+			// 	}
+			// 	cyan.Print("Quel est l'index du spinner que vous voulez utiliser ? (0 à 43) ")
+			// 	var spin string
+			// 	fmt.Scanln(&spin)
+			// 	//Vérifier si le spinner est vide
+			// 	if len(spin) == 0 {
+			// 		red.Println("Erreur : Vous devez spécifier un spinner")
+			// 		continue
+			// 	}
+			// 	//convertir le string en int
+			// 	spinint, err := strconv.Atoi(spin)
 
-				if err != nil {
-					red.Println("Erreur : Vous devez spécifier un nombre")
-					continue
-				}
-				//vérifier si le spinner est entre 0 et 43
-				if spinint < 0 || spinint > 43 {
-					red.Println("Erreur : Vous devez spécifier un nombre entre 0 et 43")
-					continue
-				}
-				//set le spinner dans le fichier de config
-				vp.Set("cli.spinner", spinint)
-				s := spinner.New(spinner.CharSets[spinint], 100*time.Millisecond)
-				s.Prefix = color.GreenString("Spinner choisi : ")
-				s.Start()
-				time.Sleep(2 * time.Second)
-				s.Stop()
-			}
+			// 	if err != nil {
+			// 		red.Println("Erreur : Vous devez spécifier un nombre")
+			// 		continue
+			// 	}
+			// 	//vérifier si le spinner est entre 0 et 43
+			// 	if spinint < 0 || spinint > 43 {
+			// 		red.Println("Erreur : Vous devez spécifier un nombre entre 0 et 43")
+			// 		continue
+			// 	}
+			// 	//set le spinner dans le fichier de config
+			// 	vp.Set("cli.spinner", spinint)
+			// 	s := spinner.New(spinner.CharSets[spinint], 100*time.Millisecond)
+			// 	s.Prefix = color.GreenString("Spinner choisi : ")
+			// 	s.Start()
+			// 	time.Sleep(2 * time.Second)
+			// 	s.Stop()
+			// }
 
 			if choice == notifychoice {
 				vp.Set("cli.notify", !vp.GetBool("cli.notify"))

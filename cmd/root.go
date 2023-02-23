@@ -74,7 +74,7 @@ func Conf() {
 		"cli.qrcode":    true,
 		"cli.history":   true,
 		"cli.update":    true,
-		"cli.lastmsg":   time.Time{},
+		"cli.lastmsg":   "",
 		"cli.command":   os.Args[0],
 	}
 
@@ -105,7 +105,7 @@ func Conf() {
 	var (
 		currentDate    = time.Now()
 		difference     = currentDate.Sub(vp.GetTime("cli.lastmsg"))
-		currentVersion = "5.0.0"
+		currentVersion = "0.0.0"
 	)
 	//Obtenir la dernière version publiée
 	resp, err := http.Get("https://api.github.com/repos/el2zay/hibercli/releases/latest")

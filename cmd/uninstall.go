@@ -1,16 +1,12 @@
-/*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
 	"fmt"
 	"os"
 	"os/exec"
-	"time"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/briandowns/spinner"
+	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -74,40 +70,35 @@ var uninstallCmd = &cobra.Command{
 			bgreen.Println("Merci pour votre confiance !")
 		}
 		if choice == red.Sprintf("Oui") {
-			s := spinner.New(spinner.CharSets[14], 100*time.Millisecond)
-			s.Prefix = bmagenta.Sprint("Suppression du dossier de configuration" + "  ")
-			s.Start()
+			bar := progressbar.NewOptions64(hibercliSize,
+				progressbar.OptionSetDescription(bmagenta.Sprint("Suppression de HiberCLI\n")),
+			)
 			if _, err := os.Stat(configDir); !os.IsNotExist(err) {
 				err := os.RemoveAll(configDir)
 				if err != nil {
-					s.Stop()
 					red.Println("Erreur lors de la suppression du dossier de configuration : ", err, "PATH : ", configDir)
 					os.Exit(0)
 				}
-				bmagenta.Sprint("Suppression du dossier temporaire" + "  ")
+				bar.Add64(config.Size())
 				if _, err := os.Stat(os.TempDir() + "/HiberCLI_temp/"); !os.IsNotExist(err) {
 					err := os.RemoveAll(os.TempDir() + "/HiberCLI_temp/")
+					bar.Add64(int64(temp.Size()))
 					if err != nil {
-						s.Stop()
 						red.Println("Erreur lors de la suppression du dossier temporaire :", err, "PATH : ", os.TempDir()+"/HiberCLI_temp/")
-						os.Exit(0)
+						
 					}
 				}
-				bmagenta.Sprint("Suppression de HiberCLI" + "  ")
 				path, err := exec.LookPath(vp.GetString("cli.command"))
 				if err != nil {
-					s.Stop()
 					red.Println("HiberCli n'a pas été détecté sur votre système.")
 					os.Exit(0)
 				}
 				err = os.Remove(path)
 				if err != nil {
-					s.Stop()
 					red.Println("Erreur lors de la suppression de HiberCli :", err, "PATH : ", path, "\nEssayer de refaire la commande en tant qu'administrateur/sudoeur ou de le supprimer vous même.")
 					os.Exit(0)
 				}
 			}
-			s.Stop()
 			bgreen.Println("HiberCli a été désinstallé avec succès. Merci d'avoir utiliser HiberCli !")
 		}
 	},

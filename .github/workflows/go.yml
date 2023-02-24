@@ -24,7 +24,7 @@ jobs:
     - name: Build
       # Lancer la commande go build -o hibercli-macos ./... puis le mettre dans les releases du repo github.com/el2zay/hibercli avec le tag 0.0.1
       run: |
-        go build -o hibercli-macos ./...
+        go build -o hiberclimacos ./...
         mkdir -p ${{ github.workspace }}/release
         mv hiberclimacos ${{ github.workspace }}/release/hiberclimacos
         cd ${{ github.workspace }}/release

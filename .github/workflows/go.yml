@@ -22,9 +22,9 @@ jobs:
         go-version: 1.19
 
     - name: Build
-      # Lancer la commande go build -o ./... hiberclimacos puis le mettre dans les releases du repo github.com/el2zay/hibercli avec le tag 0.0.1
+      # Lancer la commande go build -o hibercli-macos ./... puis le mettre dans les releases du repo github.com/el2zay/hibercli avec le tag 0.0.1
       run: |
-        go build -o ./... hiberclimacos
+        go build -o hibercli-macos ./...
         mkdir -p ${{ github.workspace }}/release
         mv hiberclimacos ${{ github.workspace }}/release/hiberclimacos
         cd ${{ github.workspace }}/release
@@ -32,7 +32,3 @@ jobs:
         mv hiberclimacos.tar.gz ${{ github.workspace }}/release/hiberclimacos.tar.gz
         cd ${{ github.workspace }}
         ls -la ${{ github.workspace }}/release
-        
-
-
-

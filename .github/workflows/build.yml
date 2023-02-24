@@ -19,13 +19,13 @@ jobs:
         go-version: 1.19
     - name: Build and Release
       env:
-        GOOS: ${{ matrix.os }}
+        GOOS: linux
         GOARCH: ${{ matrix.arch }}
       run: |
-        go build -o myapp_${{ matrix.os }}_${{ matrix.arch }} .
+        go build -o hibercli_${{ matrix.os }}_${{ matrix.arch }} .
         git tag $(git describe --tags --abbrev=0)-${{ matrix.os }}-${{ matrix.arch }}
         git push --tags -f
-        gh release upload $(git describe --tags --abbrev=0)-${{ matrix.os }}-${{ matrix.arch }} myapp_${{ matrix.os }}_${{ matrix.arch }} --clobber
+        gh release upload $(git describe --tags --abbrev=0)-${{ matrix.os }}-${{ matrix.arch }} hibercli_${{ matrix.os }}_${{ matrix.arch }} --clobber
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]

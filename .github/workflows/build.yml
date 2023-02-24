@@ -10,9 +10,11 @@ on:
     branches: [ "main" ]
 
 jobs:
-
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
     - uses: actions/checkout@v3
 
@@ -21,8 +23,20 @@ jobs:
       with:
         go-version: 1.19
 
+  # Build avec comme nom l'executable-{os}-{arch}
     - name: Build
-      run: go build -v ./...
+      run: go build -o hibercli-${{ matrix.os }}-${{ matrix.arch }} .
 
     - name: Test
       run: go test -v ./...
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false

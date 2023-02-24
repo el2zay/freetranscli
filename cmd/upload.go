@@ -7,24 +7,24 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/atotto/clipboard"
-	"github.com/briandowns/spinner"
 	"github.com/gen2brain/beeep"
 	"github.com/mdp/qrterminal"
+	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var (
 	filetype = "file"
-	size     int64
 	url      string
+	i        int
 )
 
 func zipSource(source, target string) error {
+	var size int64
 	// Compter la taille totale des fichiers à archiver
 	err := filepath.Walk(source, func(_ string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
@@ -46,6 +46,12 @@ func zipSource(source, target string) error {
 	// Créer un objet zip.Writer pour écrire
 	zipWriter := zip.NewWriter(zipFile)
 	defer zipWriter.Close()
+
+	// Créer une progressbar
+	bar := progressbar.DefaultBytes(
+		size,
+		cyan.Sprint("Archivage"),
+	)
 
 	// Archiver les fichiers
 	err = filepath.Walk(source, func(path string, info os.FileInfo, err error) error {
@@ -75,11 +81,15 @@ func zipSource(source, target string) error {
 			if err != nil {
 				return err
 			}
-			_, err = io.Copy(writer, fileToZip)
+
+			// Copier le fichier vers le fichier zip tout en mettant à jour la progressbar
+			_, err = io.Copy(writer, io.TeeReader(fileToZip, bar))
 			if err != nil {
 				return err
 			}
-
+			defer zipWriter.Close()
+			//Arrêter la progressbar
+			bar.Finish()
 		}
 		return nil
 	})
@@ -96,7 +106,6 @@ func readableSize(size int64) string {
 		MB = 1000 * KB
 		GB = 1000 * MB
 	)
-
 	switch {
 	//Si la taille est inférieure à 1Ko, on affiche la taille en octets
 	case size < KB:
@@ -155,12 +164,16 @@ Alias : up, u , upld`,
 			survey.AskOne(prompt, &input)
 			args = append(args, input)
 			//Retirer les guillemets si il y en a
-			args[0] = strings.ReplaceAll(args[0], "'", "")
-
+			args[i] = strings.ReplaceAll(args[i], "'", "")
 		}
 		//Vérifier qu'il n ya aucune erreur dans les fichiers
 		for i := 0; i < len(args); i++ {
+			//Retirer le / a la fin du chemin si il y en a un
+			if args[i][len(args[i])-1:] == "/" {
+				args[i] = args[i][:len(args[i])-1]
+			}
 			_, err := os.Stat(args[i])
+
 			//Si le fichier n'existe pas, on affiche une erreur
 			if os.IsNotExist(err) {
 				filename := args[i]
@@ -182,7 +195,6 @@ Alias : up, u , upld`,
 							if len(args) == 1 {
 								return
 							}
-
 							continue
 						}
 
@@ -199,7 +211,6 @@ Alias : up, u , upld`,
 							red.Printf("Erreur : Impossible de lire la réponse de l'utilisateur : %s\n", err)
 							return
 						}
-
 						if confirm {
 							args[i] = matches[0]
 						} else {
@@ -209,10 +220,11 @@ Alias : up, u , upld`,
 						if len(args) == 1 {
 							return
 						}
-
 						continue
 					}
+
 				}
+				continue
 			}
 
 			//Si le fichier n'a pas les droits d'accès, on affiche une erreur
@@ -222,7 +234,7 @@ Alias : up, u , upld`,
 			}
 
 			file, _ := os.Stat(args[i])
-			size = file.Size()
+			size := file.Size()
 
 			//si le fichier est plus gros que 50go, on affiche une erreur
 			if size > 50000000000 {
@@ -230,37 +242,65 @@ Alias : up, u , upld`,
 				os.Exit(0)
 			}
 
-			//si le fichier est un dossier
+			//Progress bar pour le téléversement
+			bar := progressbar.DefaultBytes(
+				size,
+				green.Sprint("Téléversement en cours"),
+			)
+			//Ajouter un fichier au reader
+			reader, err := os.Open(args[i])
+			if err != nil {
+				red.Println(err)
+				os.Exit(0)
+			}
+			//Si args[i] est un dossier on le zip
 			if file.IsDir() {
 				filetype = "directory"
 				//si le dossier est plus gros que 50go
-				if size >= 50000000000 {
+				if size > 50000000000 {
 					red.Println("Erreur : Vous ne pouvez pas upload un dossier plus gros que 50Go.")
 					os.Exit(0)
 				}
-				//Afficher le spinner
-				s := spinner.New(spinner.CharSets[vp.GetInt("cli.spinner")], 100*time.Millisecond)
-				s.Prefix = cyan.Sprint("Archivage du dossier en cours  ")
-				s.Start()
 				//Archiver le dossier
-				if err := zipSource(args[0], args[0]+".zip"); err != nil {
+				if err := zipSource(args[0], args[i]+".zip"); err != nil {
 					red.Println(err, "Désolé essayez de le compresser vous même…")
 					//Supprimer définitivement le fichier
-					os.Remove(args[0] + ".zip")
+					os.Remove(args[i] + ".zip")
 					os.Exit(0)
-					s.Stop()
-				} else {
+				} else if err == nil {
 					//Supprimer définitivement le fichier
-					os.Remove(args[0] + ".zip")
-					s.Stop()
+					args[i] = args[i] + ".zip"
+					file, _ := os.Stat(args[i])
+					size = file.Size()
+					reader, err = os.Open(args[i])
+					if err != nil {
+						red.Println(err)
+						os.Exit(0)
+					}
+					bar := progressbar.DefaultBytes(
+						size,
+						green.Sprint("Téléversement en cours"),
+					)
+					_, err = io.Copy(bar, reader)
+					if err != nil {
+						red.Println(err)
+						os.Exit(0)
+					}
+					//Supprimer définitivement le fichier
+					os.Remove(args[i])
 				}
-			}
-			s := spinner.New(spinner.CharSets[vp.GetInt("cli.spinner")], 100*time.Millisecond)
-			s.Prefix = green.Sprint("Envoie en cours de " + file.Name() + "  ")
-			s.Start()
-			time.Sleep(2 * time.Second)
-			s.Stop()
 
+			}
+			//Ajouter le fichier dans le reader
+
+			//Faire avancer la progressbar
+			_, err = io.Copy(bar, reader)
+			if err != nil {
+				red.Println(err)
+				os.Exit(0)
+			}
+			//Supprimer la progressbar
+			// fmt.Print("\033[2K\r")
 			url = "https://github.com/mdp/qrterminal"
 
 			//Enregistre les données dans un fichier d'historique si l'historique est activé
@@ -280,16 +320,17 @@ Alias : up, u , upld`,
 
 		//Vérifier si il faut afficher le qrcode
 		if vp.GetBool("cli.qrcode") {
-			qrterminal.GenerateHalfBlock((url), qrterminal.M, os.Stdout)
+			//Imprimer le qrcode en petit
+			qrterminal.GenerateHalfBlock((url), qrterminal.L, os.Stdout)
 		}
 		//Vérifier si il faut copier l'adresse dans le presse-papier
 		if vp.GetBool("cli.clipboard") {
 			clipboard := clipboard.WriteAll(url)
 			if clipboard != nil {
-				yellow.Println("Scannez le QR code pour télécharger votre fichier, l'adresse n'a pas pu être copié dans votre presse-papiers.", url)
+				yellow.Println("Scannez le QR code pour télécharger votre fichier, l'adresse n'a pas pu être copiée dans votre presse-papiers.", url)
 				os.Exit(0)
 			}
-			green.Println("Scannez le QR code pour télécharger votre fichier, l'adresse est copié dans votre presse-papiers.")
+			green.Println("Scannez le QR code pour télécharger votre fichier, l'adresse est copiée dans votre presse-papiers.")
 		} else if vp.GetBool("cli.qrcode") {
 			green.Println("\rScannez le QR code pour télécharger votre fichier.", url)
 		} else {

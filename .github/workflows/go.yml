@@ -24,7 +24,7 @@ jobs:
           go build -o hibercli-${{matrix.os}} .
       - name: Get latest release
         id: latest_release
-        uses: actions/github@v2
+        uses: actions/github@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           repository: el2zay/hibercli

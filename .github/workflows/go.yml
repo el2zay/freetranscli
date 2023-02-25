@@ -1,11 +1,10 @@
-# Actions qui sont lancées à chaque nouveau tag qui permet de créé une release avec les binaires compilés en Go 1.19 pour chaque OS dans la release. Chaque exeuctable aura comme nom hibercli-{{matrix.os}}-{{matrix.arch}}.exe
-
 name: Go
 
 on:
-  push:
-    tags:
-      - '*'
+  release:
+    types:
+      - published
+
 
 jobs:
   build:
@@ -47,26 +46,19 @@ jobs:
         with:
           path: hibercli-${{ matrix.os }}-${{ matrix.arch }}
           
-  Make_GitHub_Release:
-    name: Create Release
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.step_version.outputs.version }}
-      upload_url: ${{ steps.step_upload_url.outputs.upload_url }}
-    steps:
-      - id: step_version
-        run: echo "::set-output name=version::${{ steps.package_version.outputs.version }}"
+      - name: "Checkout"
+        uses: "actions/checkout@v2"
         
-      - id: step_upload_url
-        run: echo "::set-output name=upload_url::${{ steps.create_release.outputs.upload_url }}"
+      - name: "Get upload_url"
+        run: echo "::set-output name=upload_url::https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/$(jq --raw-output '.release.id' $GITHUB_EVENT_PATH)/assets{?name,label}"  
+        id: release
 
-      - name: Upload Release Asset
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
+      - name: "Upload cs2pr"
+        uses: "actions/upload-release-asset@v1"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.STAABM_TOKEN }}
         with:
-          upload_url: ${{ needs.Make_GitHub_Release.outputs.upload_url }}
-          asset_path: ./hibercli-${{ matrix.os }}-${{ matrix.arch }}
-          asset_name: hibercli-${{ matrix.os }}-${{ matrix.arch }}
-          asset_content_type: application/octet-stream
+          asset_content_type: "text/plain"
+          asset_name: "cs2pr"
+          asset_path: "cs2pr"
+          upload_url: ${{ steps.release.outputs.upload_url }}

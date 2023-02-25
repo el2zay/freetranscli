@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [windows, linux, darwin]
+        os: [windows-latest, linux-latest, darwin-latest]
     steps:
       - name: Set up Go 1.19
         uses: actions/setup-go@v2

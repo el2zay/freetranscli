@@ -27,7 +27,7 @@ jobs:
         uses: actions/github/rest-api@v1
         with:
           method: GET
-          url: https://api.github.com/repos/<el2zay>/<hibercli>/releases/latest
+          url: https://api.github.com/repos/el2zay/hibercli/releases/latest
           headers: '{"accept": "application/vnd.github.v3+json"}'
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload Release Asset

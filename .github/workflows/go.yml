@@ -24,11 +24,12 @@ jobs:
           go build -o hibercli-${{matrix.os}} .
       - name: Get latest release
         id: latest_release
-        uses: actions/github@v1
+        uses: actions/github/rest-api@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          repository: el2zay/hibercli
-          ref: latest
+          method: GET
+          url: https://api.github.com/repos/<el2zay>/<hibercli>/releases/latest
+          headers: '{"accept": "application/vnd.github.v3+json"}'
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload Release Asset
         id: upload-release-asset
         uses: actions/upload-release-asset@v1

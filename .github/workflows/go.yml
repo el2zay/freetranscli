@@ -4,8 +4,7 @@ name: Go
 
 on:
   release:
-    types:
-      - published
+    types: [created]
 
 
 jobs:

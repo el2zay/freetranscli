@@ -19,7 +19,7 @@ jobs:
           go-version: 1.19
         id: go
       - name: Build
-        run: go build -o hibercli-${{ matrix.os }} .
+        run: go build -o hibercli-${{matrix.os}} .
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -37,6 +37,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./main
-          asset_name: main
+          asset_path: ./hibercli-${{matrix.os}}
+          asset_name: hibercli-${{matrix.os}}
           asset_content_type: application/octet-stream

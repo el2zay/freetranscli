@@ -22,27 +22,20 @@ jobs:
       - name: Build
         run:
           go build -o hibercli-${{matrix.os}} .
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get latest release
+        id: latest_release
+        uses: actions/github@v4
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          body: Automated release created by GitHub Actions
-          draft: false
-          prerelease: false
-      - name: Get Upload URL
-        id: upload_url
-        run: echo "${{ steps.create_release.outputs.upload_url }}"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          repository: el2zay/hibercli
+          ref: latest
       - name: Upload Release Asset
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.upload_url.outputs.stdout }}
+          upload_url: ${{ steps.latest_release.outputs.upload_url }}
           asset_path: ./hibercli-${{matrix.os}}
           asset_name: hibercli-${{matrix.os}}
           asset_content_type: application/octet-stream

@@ -3,10 +3,8 @@
 name: Go
 
 on:
-  push:
-    tags:
-      - '*'
-
+  release:
+    types: [created]
 
 jobs:
   build:
@@ -32,7 +30,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: hibercli-${{ matrix.os }}-${{ matrix.arch }}
-          path: ./hibercli-${{ matrix.os }}-${{ matrix.arch }}
+          path: ./
 
 
   release:

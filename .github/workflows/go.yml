@@ -39,6 +39,12 @@ jobs:
     outputs:
       version: ${{ steps.step_version.outputs.version }}
       upload_url: ${{ steps.step_upload_url.outputs.upload_url }}
+    steps:
+      - id: step_version
+        run: echo "::set-output name=version::${{ steps.package_version.outputs.version }}"
+        
+      - id: step_upload_url
+        run: echo "::set-output name=upload_url::${{ steps.create_release.outputs.upload_url }}"
 
 
   release:
@@ -53,11 +59,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           path: hibercli-${{ matrix.os }}-${{ matrix.arch }}
-      - id: step_version
-        run: echo "::set-output name=version::${{ steps.package_version.outputs.version }}"
-        
-      - id: step_upload_url
-        run: echo "::set-output name=upload_url::${{ steps.create_release.outputs.upload_url }}"
+
 
       - name: Upload Release Asset
         id: upload-release-asset

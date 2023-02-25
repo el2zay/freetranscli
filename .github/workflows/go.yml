@@ -1,5 +1,7 @@
-# Actions qui sont lancées à chaque fois qu'il y a un nouveau tag
+# Actions qui sont lancées à chaque nouveau tag qui permet de créé une release avec les binaires compilés en Go 1.19 pour chaque OS dans la release. Chaque exeuctable aura comme nom hibercli-{{matrix.os}}-{{matrix.arch}}.exe
+
 name: Go
+
 on:
   push:
     tags:
@@ -7,36 +9,57 @@ on:
 
 jobs:
   build:
-    permissions: write-all
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [windows, linux, darwin]
+        arch: [amd64, arm64]
     steps:
-      - uses: actions/checkout@v2
       - name: Set up Go 1.19
         uses: actions/setup-go@v2
         with:
           go-version: 1.19
         id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
       - name: Build
-        run:
-          go build -o hibercli-${{matrix.os}} .
-      - name: Get latest release
-        id: latest_release
-        uses: actions/github/rest-api@v1
+        run: go build -o hibercli-${{matrix.os}}-${{matrix.arch}} .
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v2
         with:
-          method: GET
-          url: https://api.github.com/repos/el2zay/hibercli/releases/latest
-          headers: '{"accept": "application/vnd.github.v3+json"}'
-          token: ${{ secrets.GITHUB_TOKEN }}
+          name: hibercli-${{matrix.os}}-${{matrix.arch}}
+          path: hibercli-${{matrix.os}}-${{matrix.arch}}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download binaries
+        uses: actions/download-artifact@v2
+        with:
+          path: hibercli
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
       - name: Upload Release Asset
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.latest_release.outputs.upload_url }}
-          asset_path: ./hibercli-${{matrix.os}}
-          asset_name: hibercli-${{matrix.os}}
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./hibercli/*
+          asset_name: hibercli-${{matrix.os}}-${{matrix.arch}}
           asset_content_type: application/octet-stream

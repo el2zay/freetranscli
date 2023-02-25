@@ -1,3 +1,5 @@
+# Actions qui sont lancées à chaque nouveau tag qui permet de créé une release avec les binaires compilés en Go 1.19 pour chaque OS dans la release. Chaque exeuctable aura comme nom hibercli-{{matrix.os}}-{{matrix.arch}}.exe
+
 name: Go
 
 on:
@@ -58,7 +60,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.STAABM_TOKEN }}
         with:
-          asset_content_type: "text/plain"
-          asset_name: "cs2pr"
-          asset_path: "cs2pr"
+          asset_path: ./hibercli-${{ matrix.os }}-${{ matrix.arch }}
+          asset_name: hibercli-${{ matrix.os }}-${{ matrix.arch }}
+          asset_content_type: application/octet-stream
           upload_url: ${{ steps.release.outputs.upload_url }}

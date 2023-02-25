@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [windows, linux, darwin]
@@ -31,7 +31,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: hibercli-${{ matrix.os }}-${{ matrix.arch }}
-          path: hibercli-${{ matrix.os }}-${{ matrix.arch }}
+          path: ./hibercli-${{ matrix.os }}-${{ matrix.arch }}
 
   release:
     needs: build

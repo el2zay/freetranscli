@@ -8,10 +8,10 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, linux-latest, darwin-latest]
+        os: [windows-latest, ubuntu-latest, macos-latest]
     steps:
       - name: Set up Go 1.19
         uses: actions/setup-go@v2
@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [windows, linux, darwin]
+        os: [windows-latest, ubuntu-latest, macos-latest]
     steps:
       - name: Download binaries
         uses: actions/download-artifact@v2

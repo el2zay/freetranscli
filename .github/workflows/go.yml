@@ -33,10 +33,6 @@ jobs:
           name: hibercli-${{ matrix.os }}-${{ matrix.arch }}
           path: ./hibercli-${{ matrix.os }}-${{ matrix.arch }}
 
-      - name: Download binaries
-        uses: actions/download-artifact@v2
-        with:
-          path: ./
           
       - name: Checkout
         uses: actions/checkout@v2

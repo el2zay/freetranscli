@@ -30,16 +30,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         
-      - name: Get upload_url
-        run: echo "::set-output name=upload_url::https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/$(jq --raw-output '.release.id' $GITHUB_EVENT_PATH)/assets{?name,label}"  
-        id: release
+      - name: Release Upload
+        uses: d1ceward/draft-assets-release-action@v2.0.0
 
-      - name: Upload Hibercli
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          asset_path: .hibercli-${{ matrix.os }}-${{ matrix.arch }}
-          asset_name: hibercli-${{ matrix.os }}-${{ matrix.arch }}
-          asset_content_type: application/octet-stream
-          upload_url: ${{ steps.release.outputs.upload_url }}

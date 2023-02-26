@@ -35,4 +35,4 @@ jobs:
         uses: d1ceward/draft-assets-release-action@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          files: hibercli-${{ matrix.os }}-${{ matrix.arch }}
+          files: /home/runner/work/hibercli/hibercli/hibercli-${{ matrix.os }}-${{ matrix.arch }}

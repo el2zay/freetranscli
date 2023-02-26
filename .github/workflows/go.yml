@@ -23,13 +23,13 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Build
-        run: |
-          go build -o hibercli-${{ matrix.os }}-${{ matrix.arch }} .
-          which hibercli-${{ matrix.os }}-${{ matrix.arch }}
+        run: go build -o hibercli-${{ matrix.os }}-${{ matrix.arch }} .
           
+      - name: Where is the binary?
+        run: which hibercli-${{ matrix.os }}-${{ matrix.arch }}
       - name: Checkout
         uses: actions/checkout@v2
-        
+
       - name: Release Upload
         uses: d1ceward/draft-assets-release-action@v2
         with:

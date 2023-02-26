@@ -39,7 +39,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.STAABM_TOKEN }}
         with:
-          asset_path: ./hibercli-${{ matrix.os }}-${{ matrix.arch }}
+          asset_path: .hibercli-${{ matrix.os }}-${{ matrix.arch }}
           asset_name: hibercli-${{ matrix.os }}-${{ matrix.arch }}
           asset_content_type: application/octet-stream
           upload_url: ${{ steps.release.outputs.upload_url }}

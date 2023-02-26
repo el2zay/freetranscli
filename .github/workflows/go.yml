@@ -1,8 +1,11 @@
 name: Go
 
+# push to main
+
 on:
-  release:
-    types: [created]
+  push:
+    branches:
+      - main
 
 jobs:
   build:
@@ -10,6 +13,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
+        arch: ["ARM32", "x64", "x86"]
     steps:
       - name: Set up Go 1.19
         uses: actions/setup-go@v2
@@ -29,14 +33,6 @@ jobs:
           name: hibercli-${{ matrix.os }}-${{ matrix.arch }}
           path: hibercli-${{ matrix.os }}-${{ matrix.arch }}
 
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
-    steps:
       - name: Download binaries
         uses: actions/download-artifact@v2
         with:

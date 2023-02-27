@@ -23,7 +23,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Build
-        run: go build -o hibercli-${{ matrix.os }}-${{ matrix.arch }} .
+        run: |
+          mkdir -p bin
+          go build -o bin/hibercli-${{ matrix.os }}-${{ matrix.arch }}
           
       - name: Where is the binary?
         run: pwd
@@ -35,4 +37,4 @@ jobs:
         uses: d1ceward/draft-assets-release-action@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          files: ./hibercli-${{ matrix.os }}-${{ matrix.arch }}
+          files: bin/hibercli-${{ matrix.os }}-${{ matrix.arch }}

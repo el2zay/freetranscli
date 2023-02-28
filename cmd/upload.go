@@ -126,22 +126,22 @@ func temp() {
 	// Obtenir un chemin pour l'enregistrement de fichier (temporaire)
 	tempDir := os.TempDir()
 	//Si il n'y a pas de dossier temporaire, on en crée un
-	if _, err := os.Stat(tempDir + "/HiberCLI_temp"); os.IsNotExist(err) {
-		os.Mkdir(tempDir+"/HiberCLI_temp", 0777)
+	if _, err := os.Stat(tempDir + "/FreeTransCli_temp"); os.IsNotExist(err) {
+		os.Mkdir(tempDir+"/FreeTransCli_temp", 0777)
 	}
 	//Créer un fichier historic.yaml
-	if _, err := os.Stat(tempDir + "/HiberCLI_temp/historic.yaml"); os.IsNotExist(err) {
-		os.Create(tempDir + "/HiberCLI_temp/historic.yaml")
+	if _, err := os.Stat(tempDir + "/FreeTransCli_temp/historic.yaml"); os.IsNotExist(err) {
+		os.Create(tempDir + "/FreeTransCli_temp/historic.yaml")
 	}
 }
 
 // uploadCmd represents the upload command
 var uploadCmd = &cobra.Command{
 	Use:   "upload",
-	Short: "Téléverser un fichier sur Hiberfile grâce au chemin du fichier",
+	Short: "Téléverser un fichier sur FreeTransCLI grâce au chemin du fichier",
 	Long: `
-Téléverser un fichier sur Hiberfile grâce au chemin du fichier sur votre ordinateur.
-Exemple : hibercli upload /Users/username/Documents/Hey.mov
+Téléverser un fichier sur FreeTransCLI grâce au chemin du fichier sur votre ordinateur.
+Exemple : freetranscli upload /Users/username/Documents/Hey.mov
 
 Alias : up, u , upld`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -313,9 +313,9 @@ Alias : up, u , upld`,
 
 		//Vérifier si il faut afficher une notification et si il le faut avec du son.
 		if vp.GetBool("cli.notify") && vp.GetBool("cli.sound") {
-			beeep.Alert("Hibercli", "Votre fichier a bien été upload.", vp.GetString("cli.icon"))
+			beeep.Alert("FreeTransCLI", "Votre fichier a bien été upload.", vp.GetString("cli.icon"))
 		} else if vp.GetBool("cli.notify") && !vp.GetBool("cli.sound") {
-			beeep.Notify("Hibercli", "Votre fichier a bien été upload.", vp.GetString("cli.icon"))
+			beeep.Notify("FreeTransCLI", "Votre fichier a bien été upload.", vp.GetString("cli.icon"))
 		}
 
 		//Vérifier si il faut afficher le qrcode
@@ -342,6 +342,6 @@ Alias : up, u , upld`,
 
 func init() {
 	rootCmd.AddCommand(uploadCmd)
-	uploadCmd.SetUsageTemplate("Usage: hibercli upload [file]\n\n")
+	uploadCmd.SetUsageTemplate("Usage: freetranscli upload [file]\n\n")
 	uploadCmd.Aliases = []string{"up", "u", "upld"}
 }

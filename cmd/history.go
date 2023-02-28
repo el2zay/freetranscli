@@ -14,11 +14,11 @@ import (
 var historyCmd = &cobra.Command{
 	Use:   "history",
 	Short: "Affiche l'historique des fichiers téléversés",
-	Long:  `Affiche l'historique des fichiers téléversés avec la date, le chemin du fichier au moment du téléversement et l'url HiberFile`,
+	Long:  `Affiche l'historique des fichiers téléversés avec la date, le chemin du fichier au moment du téléversement et l'url FreeTransfert`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		//Executer la commande open os.TempDir() + "/HiberCLI_temp/historic.yaml
-		err := exec.Command("open", os.TempDir()+"/HiberCLI_temp/historic.yaml").Run()
+		//Executer la commande open os.TempDir() + "/FreeTransCLI_temp/historic.yaml
+		err := exec.Command("open", os.TempDir()+"/FreeTransCLI_temp/historic.yaml").Run()
 
 		if err != nil {
 			fmt.Println(err)
@@ -31,7 +31,7 @@ func historic(url string, path string, filetype string, size string) {
 	vp := viper.New()
 	vp.SetConfigName("historic")
 	vp.SetConfigType("yaml")
-	vp.AddConfigPath(os.TempDir() + "/HiberCLI_temp/")
+	vp.AddConfigPath(os.TempDir() + "/FreeTransCLI_temp/")
 	err := vp.ReadInConfig()
 	if err != nil {
 		fmt.Println(err)

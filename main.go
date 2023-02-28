@@ -1,7 +1,7 @@
 package main
 
 import (
-	"hibercli/cmd"
+	"freetranscli/cmd"
 )
 
 func main() {

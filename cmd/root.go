@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -17,7 +18,6 @@ var (
 	bgreen         = color.New(color.Bold, color.FgGreen)
 	red            = color.New(color.FgRed)
 	bred           = color.New(color.Bold, color.FgRed)
-	magenta        = color.New(color.FgMagenta)
 	bmagenta       = color.New(color.Bold, color.FgMagenta)
 	yellow         = color.New(color.FgYellow)
 	green          = color.New(color.FgGreen)
@@ -26,22 +26,23 @@ var (
 	configDir      string
 	dldPath        string
 	home           string
+	vp             = viper.New()
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use: "hibercli",
+	Use: vp.GetString("cli.command"),
 }
 
 func Conf() {
 	//Définir le répertoire de configuration selon l'OS
 	if runtime.GOOS == "windows" {
-		configDir = os.Getenv("APPDATA") + "/hibercli"
-		home = os.Getenv("USERPROFILE")
+		configDir = os.Getenv("APPDATA") + "/freetranscli" //C:\Users\%USERNAME%\AppData\Roaming\freetranscli
+		home = os.Getenv("USERPROFILE")                    //C:\Users\%USERNAME%
 
 	} else {
-		configDir = os.Getenv("HOME") + "/.config/hibercli"
-		home = os.Getenv("HOME")
+		configDir = os.Getenv("HOME") + "/.config/freetranscli" //~/.config/freetranscli
+		home = os.Getenv("HOME")                                //~
 
 	}
 	// créer le répertoire de configuration s'il n'existe pas
@@ -108,10 +109,9 @@ func Conf() {
 		currentVersion = "0.0.0"
 	)
 	//Obtenir la dernière version publiée
-	resp, err := http.Get("https://api.github.com/repos/el2zay/hibercli/releases/latest")
+	resp, err := http.Get("https://api.github.com/repos/el2zay/freetranscli/releases/latest")
 	if err != nil {
-		red.Println("Erreur : Impossible de récupérer la dernière version publiée\n", err)
-		os.Exit(0)
+		yellow.Println("Impossible de récupérer la dernière version publiée\n", err)
 	}
 
 	//Lire le body
@@ -127,19 +127,14 @@ func Conf() {
 
 	//Vérifier que si la version actuelle est inférieure à la dernière version publiée et que l'utilisateur a activé l'affichage du message et que le dernier message a été affiché il y a plus de 12 heures
 	if currentVersion < data["tag_name"].(string) && vp.GetBool("cli.update") && difference.Hours() >= 12 {
-		magenta.Println("\r", `
-╭ Mise à jour ─────────────────────────────────────────────────╮
-│                                                              │
-│  Une nouvelle version est disponible`, red.Sprint(currentVersion), "→", green.Sprint(data["tag_name"]), magenta.Sprint(`          │
-│    'hibercli set' pour activer les mises à jour automatiques │
-│                                                              │
-╰──────────────────────────────────────────────────────────────╯`))
+		fmt.Print("Une nouvelle version est disponible ", bred.Sprint(currentVersion), " → ", bgreen.Sprint(data["tag_name"]), "\n'freetranscli set' pour activer les mises à jour automatiques \n\n")
+
 		vp.Set("cli.lastmsg", currentDate)
 	}
 	//Ecrire dans la configuration
 	err = vp.WriteConfig()
 	if err != nil {
-		red.Println("Erreur : Impossible d'écrire la configuration\n", err)
+		red.Println("Impossible d'écrire la configuration\n", err)
 		os.Exit(0)
 	}
 
@@ -158,16 +153,16 @@ func init() {
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetHelpTemplate(`
 Usage:
-      hibercli [commande]
+      {{.UseLine}} [commande]
 
 Commandes:
-      download/d    Télécharger un fichier depuis HiberFile grâce à l'url du fichier
+      download/d    Télécharger un fichier depuis FreeTransfert grâce à l'url du fichier
       help          Aide à propos d'une commande
       history       Affiche l'historique des fichiers téléversés
       issue         Ouvre une issue sur GitHub
-      set/config    Paramétrer HiberCLI
-      uninstall     Désinstaller HiberCLI
-      upload/u      Téléverser un fichier sur HiberFile grâce au chemin du fichier
+      set/config    Paramétrer FreeTransCli
+      uninstall     Désinstaller FreeTransCli
+      upload/u      Téléverser un fichier sur FreeTransfert grâce au chemin du fichier
 `)
 
 }

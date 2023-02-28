@@ -53,7 +53,7 @@ Si vous n'avez pas de compte GitHub vous pouvez en créé un gratuitement sur ht
 		survey.AskOne(multiline, &description)
 
 		//Ouvrir le site d'issue avec le titre et la description
-		openbrowser("https://github.com/el2zay/hibercli/issues/new?title=" + title + "&body=" + description)
+		openbrowser("https://github.com/el2zay/freetranscli/issues/new?title=" + title + "&body=" + description)
 	},
 }
 

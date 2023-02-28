@@ -1,4 +1,4 @@
-module hibercli
+module freetranscli
 
 go 1.19
 

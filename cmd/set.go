@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	historicfile   = os.TempDir() + "/HiberCLI_temp/historic.yaml"
+	historicfile   = os.TempDir() + "/FreeTransCli_temp/historic.yaml"
 	notifychoice   string
 	soundchoice    string
 	iconchoice     string
@@ -111,7 +111,7 @@ Paramétrer et personnaliser le client, pour le moment vous pouvez changer le do
 						"Modifier le nom de la commande",
 						red.Sprint("Effacer l'historique"),
 						red.Sprint("Réinitialiser la configuration"),
-						red.Sprint("Désinstaller HiberCLI"),
+						red.Sprint("Désinstaller FreeTransCli"),
 					},
 					PageSize: 14,
 				}
@@ -128,7 +128,7 @@ Paramétrer et personnaliser le client, pour le moment vous pouvez changer le do
 						"Modifier le nom de la commande",
 						red.Sprint("Effacer l'historique"),
 						red.Sprint("Réinitialiser la configuration"),
-						red.Sprint("Désinstaller HiberCLI"),
+						red.Sprint("Désinstaller FreeTransCli"),
 					},
 					PageSize: 11,
 				}
@@ -255,9 +255,9 @@ Paramétrer et personnaliser le client, pour le moment vous pouvez changer le do
 				}
 				var selecticon string
 				if vp.GetBool("cli.sound") {
-					beeep.Alert("Hibercli", "Test des notifications", iconpath)
+					beeep.Alert("FreeTransCLI", "Test des notifications", iconpath)
 				} else if !vp.GetBool("cli.sound") {
-					beeep.Notify("Hibercli", "Test des notifications", iconpath)
+					beeep.Notify("FreeTransCLI", "Test des notifications", iconpath)
 				}
 				notifinquirer := &survey.Select{
 					Message: "Quel paramètre ? (CTRL+C pour quitter)",
@@ -308,9 +308,9 @@ Paramétrer et personnaliser le client, pour le moment vous pouvez changer le do
 			}
 
 			if choice == "Modifier le nom de la commande" {
-				hiberclipath, err := exec.LookPath("hibercli")
+				freetransclipath, err := exec.LookPath("freetranscli")
 				if err == os.ErrNotExist {
-					red.Println("Erreur : Impossible de trouver hibercli.")
+					red.Println("Erreur : Impossible de trouver freetranscli.")
 					continue
 				} else if err != nil {
 					red.Println(err)
@@ -330,9 +330,9 @@ Paramétrer et personnaliser le client, pour le moment vous pouvez changer le do
 					red.Println("Erreur : Ce nom de commande ne peut pas être utilisée", err)
 					continue
 				}
-				//renommer la commande en remplaçant hibercli par le nouveau nom
-				newname := strings.Replace(hiberclipath, "hibercli", askname, 1)
-				err = os.Rename(hiberclipath, newname)
+				//renommer la commande en remplaçant freetranscli par le nouveau nom
+				newname := strings.Replace(freetransclipath, "freetranscli", askname, 1)
+				err = os.Rename(freetransclipath, newname)
 				if err != nil {
 					red.Println("Erreur : Impossible de renommer la commande", err)
 					continue
@@ -384,7 +384,7 @@ Paramétrer et personnaliser le client, pour le moment vous pouvez changer le do
 					continue
 				}
 			}
-			if choice == red.Sprint("Désinstaller HiberCLI") {
+			if choice == red.Sprint("Désinstaller FreeTransCli") {
 				uninstallCmd.Run(uninstallCmd, []string{})
 			}
 			err = vp.WriteConfig()
@@ -405,7 +405,7 @@ func init() {
 	setCmd.SetHelpTemplate(`{{.Long}}
 
 Usage:
-      hibercli set
+      freetranscli set
 
 Aliases:
 	set, setting, settings, config, conf

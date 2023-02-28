@@ -14,7 +14,7 @@ import (
 // uninstallCmd represents the uninstall command
 var uninstallCmd = &cobra.Command{
 	Use:   "uninstall",
-	Short: "Désinstalle HiberCli",
+	Short: "Désinstalle FreTransCLI",
 	Run: func(cmd *cobra.Command, args []string) {
 		vp := viper.New()
 		vp.SetConfigName("config")
@@ -25,41 +25,41 @@ var uninstallCmd = &cobra.Command{
 			red.Println(err)
 			os.Exit(0)
 		}
-		//Définir hibercliSize comme une variable globale
-		var hibercliSize int64
+		//Définir ftcSize comme une variable globale
+		var ftcSize int64
 		path, _ := exec.LookPath(vp.GetString("cli.command"))
 		//Vérifier la taille du fichier de configuration
 		config, err := os.Stat(configDir)
 		//Si il y a une erreur ne pas le calculer
 		if err != nil {
-			hibercliSize = 0
+			ftcSize = 0
 		} else {
-			hibercliSize = config.Size()
+			ftcSize = config.Size()
 		}
 		//Vérifier la taille du dossier de configuration
-		temp, err := os.Stat(os.TempDir() + "/HiberCLI_temp/")
+		temp, err := os.Stat(os.TempDir() + "/FreeTransCLI_temp")
 		//Si il y a une erreur ne pas le calculer
 		if err != nil {
-			hibercliSize += 0
+			ftcSize += 0
 		} else {
 			// Sinon ajouter la taille du dossier de configuration au calcul
-			hibercliSize += temp.Size()
+			ftcSize += temp.Size()
 		}
-		//Vérifier la taille du fichier hibercli
-		hibercli, err := os.Stat(path)
+		//Vérifier la taille du fichier ftc
+		ftc, err := os.Stat(path)
 		//Si il y a une erreur ne pas le calculer
 		if err != nil {
-			hibercliSize += 0
+			ftcSize += 0
 		} else {
-			// Sinon ajouter la taille du fichier hibercli au calcul
-			hibercliSize += hibercli.Size()
+			// Sinon ajouter la taille du fichier ftc au calcul
+			ftcSize += ftc.Size()
 		}
 
-		fmt.Println("• HiberCli ne fonctionne pas correctement ? " + bmagenta.Sprint("Ouvrez une issue !\n"))
-		fmt.Println("Estimation de l'espace disque qui sera libéré : " + bmagenta.Sprintf(readableSize(hibercliSize)))
+		fmt.Println("• FreeTransCLI ne fonctionne pas correctement ? " + bmagenta.Sprint("Ouvrez une issue !\n"))
+		fmt.Println("Estimation de l'espace disque qui sera libéré : " + bmagenta.Sprintf(readableSize(ftcSize)))
 		var choice string
 		inquirer = &survey.Select{
-			Message: "Désinstaller HiberCLI ? ",
+			Message: "Désinstaller FreeTransCLI ? ",
 			Options: []string{
 				bgreen.Sprintf("Non"),
 				red.Sprintf("Oui"),
@@ -70,8 +70,8 @@ var uninstallCmd = &cobra.Command{
 			bgreen.Println("Merci pour votre confiance !")
 		}
 		if choice == red.Sprintf("Oui") {
-			bar := progressbar.NewOptions64(hibercliSize,
-				progressbar.OptionSetDescription(bmagenta.Sprint("Suppression de HiberCLI\n")),
+			bar := progressbar.NewOptions64(ftcSize,
+				progressbar.OptionSetDescription(bmagenta.Sprint("Suppression de FreeTransCLI\n")),
 			)
 			if _, err := os.Stat(configDir); !os.IsNotExist(err) {
 				err := os.RemoveAll(configDir)
@@ -80,26 +80,26 @@ var uninstallCmd = &cobra.Command{
 					os.Exit(0)
 				}
 				bar.Add64(config.Size())
-				if _, err := os.Stat(os.TempDir() + "/HiberCLI_temp/"); !os.IsNotExist(err) {
-					err := os.RemoveAll(os.TempDir() + "/HiberCLI_temp/")
+				if _, err := os.Stat(os.TempDir() + "/FreeTransCLI_temp"); !os.IsNotExist(err) {
+					err := os.RemoveAll(os.TempDir() + "/FreeTransCLI_temp")
 					bar.Add64(int64(temp.Size()))
 					if err != nil {
-						red.Println("Erreur lors de la suppression du dossier temporaire :", err, "PATH : ", os.TempDir()+"/HiberCLI_temp/")
-						
+						red.Println("Erreur lors de la suppression du dossier temporaire :", err, "PATH : ", os.TempDir()+"/FreeTransCLI_temp")
+
 					}
 				}
 				path, err := exec.LookPath(vp.GetString("cli.command"))
 				if err != nil {
-					red.Println("HiberCli n'a pas été détecté sur votre système.")
+					red.Println("FreeTransCLI n'a pas été détecté sur votre système.")
 					os.Exit(0)
 				}
 				err = os.Remove(path)
 				if err != nil {
-					red.Println("Erreur lors de la suppression de HiberCli :", err, "PATH : ", path, "\nEssayer de refaire la commande en tant qu'administrateur/sudoeur ou de le supprimer vous même.")
+					red.Println("Erreur lors de la suppression de FreeTransCLI :", err, "PATH : ", path, "\nEssayer de refaire la commande en tant qu'administrateur/sudoeur ou de le supprimer vous même.")
 					os.Exit(0)
 				}
 			}
-			bgreen.Println("HiberCli a été désinstallé avec succès. Merci d'avoir utiliser HiberCli !")
+			bgreen.Println("FreeTransCLI a été désinstallé avec succès. Merci d'avoir utiliser FreeTransCLI !")
 		}
 	},
 }

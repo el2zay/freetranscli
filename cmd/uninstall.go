@@ -37,7 +37,7 @@ var uninstallCmd = &cobra.Command{
 			ftcSize = config.Size()
 		}
 		//Vérifier la taille du dossier de configuration
-		temp, err := os.Stat(os.TempDir() + "/FreeTransCLI_temp")
+		temp, err := os.Stat(tempDir)
 		//Si il y a une erreur ne pas le calculer
 		if err != nil {
 			ftcSize += 0
@@ -80,11 +80,11 @@ var uninstallCmd = &cobra.Command{
 					os.Exit(0)
 				}
 				bar.Add64(config.Size())
-				if _, err := os.Stat(os.TempDir() + "/FreeTransCLI_temp"); !os.IsNotExist(err) {
-					err := os.RemoveAll(os.TempDir() + "/FreeTransCLI_temp")
+				if _, err := os.Stat(tempDir); !os.IsNotExist(err) {
+					err := os.RemoveAll(tempDir)
 					bar.Add64(int64(temp.Size()))
 					if err != nil {
-						red.Println("Erreur lors de la suppression du dossier temporaire :", err, "PATH : ", os.TempDir()+"/FreeTransCLI_temp")
+						red.Println("Erreur lors de la suppression du dossier temporaire :", err, "PATH : ", tempDir)
 
 					}
 				}

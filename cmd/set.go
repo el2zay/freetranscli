@@ -17,6 +17,7 @@ import (
 )
 
 var (
+	tempDir        = os.TempDir() + "/FreeTransCli_temp"
 	historicfile   = os.TempDir() + "/FreeTransCli_temp/historic.yaml"
 	notifychoice   string
 	soundchoice    string

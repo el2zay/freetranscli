@@ -18,7 +18,7 @@ var historyCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		//Executer la commande open os.TempDir() + "/FreeTransCLI_temp/historic.yaml
-		err := exec.Command("open", os.TempDir()+"/FreeTransCLI_temp/historic.yaml").Run()
+		err := exec.Command("open", historicfile).Run()
 
 		if err != nil {
 			fmt.Println(err)
@@ -31,7 +31,7 @@ func historic(url string, path string, filetype string, size string) {
 	vp := viper.New()
 	vp.SetConfigName("historic")
 	vp.SetConfigType("yaml")
-	vp.AddConfigPath(os.TempDir() + "/FreeTransCLI_temp/")
+	vp.AddConfigPath(tempDir)
 	err := vp.ReadInConfig()
 	if err != nil {
 		fmt.Println(err)

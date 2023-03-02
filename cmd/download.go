@@ -1,18 +1,76 @@
 package cmd
 
 import (
+	"archive/zip"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/gen2brain/beeep"
 	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+func Unzip(source, target string) error {
+	var size int64
+	err := filepath.Walk(source, func(_ string, info os.FileInfo, err error) error {
+		if !info.IsDir() {
+			size += info.Size()
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	zipReader, err := zip.OpenReader(source)
+	if err != nil {
+		return err
+	}
+	defer zipReader.Close()
+
+	bar := progressbar.DefaultBytes(
+		size,
+		cyan.Sprint("Décompression"),
+	)
+	for _, file := range zipReader.File {
+		zippedFile, err := file.Open()
+		if err != nil {
+			return err
+		}
+		defer zippedFile.Close()
+
+		now := time.Now()
+		dateTimeString := now.Format("02_01_2006 15:04:05")
+		err = os.MkdirAll(target+"/freetransfert "+dateTimeString+"/", 0777)
+		if err != nil {
+			return err
+		}
+		extractedFile, err := os.Create(target + "/freetransfert " + dateTimeString + "/" + file.Name)
+		if err != nil {
+			return err
+		}
+		defer extractedFile.Close()
+
+		_, err = io.Copy(extractedFile, zippedFile)
+		if err != nil {
+			return err
+		}
+		bar.Add(int(file.UncompressedSize64))
+	}
+	bar.Finish()
+	err = os.Remove(source)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 // downloadCmd represents the download command
 var downloadCmd = &cobra.Command{
@@ -25,6 +83,7 @@ Le fichier sera téléchargé dans le dossier qui est enregistré dans la config
 
 Alias : d, dld, dl, down`,
 	Run: func(cmd *cobra.Command, args []string) {
+		isZip := false
 		//Obtenir le fichier de configuration
 		vp := viper.New()
 		vp.SetConfigName("config")
@@ -46,6 +105,7 @@ Alias : d, dld, dl, down`,
 			//Retirer les guillemets si il y en a
 			args[0] = strings.ReplaceAll(args[0], "'", "")
 		}
+
 		//Séparer les / pour ne garder que le code du transfert
 		transfertKey := strings.Split(args[0], "/")
 		// Obtenir des informations sur le transfert
@@ -81,7 +141,7 @@ Alias : d, dld, dl, down`,
 		if zip, ok := info["zip"].(map[string]interface{}); ok {
 			if zipPath, ok := zip["path"].(string); ok {
 				path = zipPath
-				fmt.Println("ceci est un zip")
+				isZip = true
 			}
 		}
 		if path == "" {
@@ -101,7 +161,7 @@ Alias : d, dld, dl, down`,
 
 		body, err = io.ReadAll(resp.Body)
 		if err != nil {
-			red.Printf("  (2ème fetch) : %s\n", err.Error())
+			red.Printf("Erreur (2ème fetch) : %s\n", err.Error())
 			return
 		}
 
@@ -134,7 +194,7 @@ Alias : d, dld, dl, down`,
 		if _, err := os.Stat(filePath); err == nil {
 			var choice string
 			inquirer = &survey.Select{
-				Message: "Le fichier existe déjà, que voulez-vous faire ?",
+				Message: fmt.Sprintf("Le fichier %v existe déjà, que voulez-vous faire ?", path),
 				Options: []string{"Renommer le fichier téléchargé", "Renommer l'ancien fichier", "Remplacer", "Annuler"},
 			}
 			survey.AskOne(inquirer, &choice)
@@ -159,7 +219,7 @@ Alias : d, dld, dl, down`,
 				//Yes or no
 				var danger bool
 				inquirer := &survey.Confirm{
-					Message: "Êtes-vous sûr de vouloir remplacer le fichier ?",
+					Message: bred.Sprint("Êtes-vous sûr de vouloir remplacer le fichier ?\nAttention cet action est irréversible !"),
 				}
 				survey.AskOne(inquirer, &danger)
 				os.Remove(filePath)
@@ -173,21 +233,29 @@ Alias : d, dld, dl, down`,
 			green.Sprint("Téléchargement"),
 		)
 		out, _ := os.Create(filePath)
-
-		if err != nil {
-			red.Printf("Erreur lors du téléchargement : %s\n", err.Error())
-			return
-		}
-
 		defer out.Close()
 
-		io.Copy(io.MultiWriter(out, bar), resp.Body)
+		_, err = io.Copy(io.MultiWriter(out, bar), resp.Body)
 
 		if err != nil {
 			red.Printf("Erreur lors du téléchargement : %s\n", err.Error())
 			return
 		}
-	}}
+		bar.Clear()
+
+		if isZip {
+			Unzip(filePath, vp.GetString("cli.dld"))
+		}
+
+		//Vérifier si il faut afficher une notification et si il le faut avec du son.
+		if vp.GetBool("cli.notify") && vp.GetBool("cli.sound") {
+			beeep.Alert("FreeTransCLI", "Vos fichiers ont bien été téléchargés.", vp.GetString("cli.icon"))
+		} else if vp.GetBool("cli.notify") && !vp.GetBool("cli.sound") {
+			beeep.Notify("FreeTransCLI", "Vos fichiers ont bien été téléchargés.", vp.GetString("cli.icon"))
+		}
+
+	},
+}
 
 func init() {
 	rootCmd.AddCommand(downloadCmd)

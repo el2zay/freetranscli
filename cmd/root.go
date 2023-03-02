@@ -26,12 +26,11 @@ var (
 	configDir      string
 	dldPath        string
 	home           string
-	vp             = viper.New()
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use: vp.GetString("cli.command"),
+	Use: "freetranscli",
 }
 
 func Conf() {

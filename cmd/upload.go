@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -21,10 +22,11 @@ var (
 	filetype = "file"
 	url      string
 	i        int
+	size     int64
+
 )
 
 func zipSource(source, target string) error {
-	var size int64
 	// Compter la taille totale des fichiers à archiver
 	err := filepath.Walk(source, func(_ string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
@@ -35,7 +37,8 @@ func zipSource(source, target string) error {
 	if err != nil {
 		return err
 	}
-
+	//Créer une progressbar qui affiche la taille totale des fichiers à archiver
+	bar := progressbar.DefaultBytes(size, cyan.Sprint("Archivage"))
 	// Créer un nouveau fichier zip
 	zipFile, err := os.Create(target)
 	if err != nil {
@@ -46,12 +49,6 @@ func zipSource(source, target string) error {
 	// Créer un objet zip.Writer pour écrire
 	zipWriter := zip.NewWriter(zipFile)
 	defer zipWriter.Close()
-
-	// Créer une progressbar
-	bar := progressbar.DefaultBytes(
-		size,
-		cyan.Sprint("Archivage"),
-	)
 
 	// Archiver les fichiers
 	err = filepath.Walk(source, func(path string, info os.FileInfo, err error) error {
@@ -68,7 +65,8 @@ func zipSource(source, target string) error {
 			if err != nil {
 				return err
 			}
-
+			//Mettre à jour la progressbar
+			bar.Add64(info.Size())
 			// Créer un header pour le fichier à archiver
 			header, err := zip.FileInfoHeader(info)
 			if err != nil {
@@ -81,15 +79,11 @@ func zipSource(source, target string) error {
 			if err != nil {
 				return err
 			}
-
-			// Copier le fichier vers le fichier zip tout en mettant à jour la progressbar
-			_, err = io.Copy(writer, io.TeeReader(fileToZip, bar))
+			_, err = io.Copy(writer, fileToZip)
 			if err != nil {
 				return err
 			}
-			defer zipWriter.Close()
-			//Arrêter la progressbar
-			bar.Finish()
+
 		}
 		return nil
 	})
@@ -119,19 +113,6 @@ func readableSize(size int64) string {
 		//Sinon on affiche la taille en Go
 	default:
 		return fmt.Sprintf("%.1f Go", float64(size)/GB)
-	}
-}
-
-func temp() {
-	// Obtenir un chemin pour l'enregistrement de fichier (temporaire)
-	tempDir := os.TempDir()
-	//Si il n'y a pas de dossier temporaire, on en crée un
-	if _, err := os.Stat(tempDir + "/FreeTransCli_temp"); os.IsNotExist(err) {
-		os.Mkdir(tempDir+"/FreeTransCli_temp", 0777)
-	}
-	//Créer un fichier historic.yaml
-	if _, err := os.Stat(tempDir + "/FreeTransCli_temp/historic.yaml"); os.IsNotExist(err) {
-		os.Create(tempDir + "/FreeTransCli_temp/historic.yaml")
 	}
 }
 
@@ -166,8 +147,9 @@ Alias : up, u , upld`,
 			//Retirer les guillemets si il y en a
 			args[i] = strings.ReplaceAll(args[i], "'", "")
 		}
-		//Vérifier qu'il n ya aucune erreur dans les fichiers
-		for i := 0; i < len(args); i++ {
+
+		//Vérifier qu'il n y a aucune erreur dans les fichiers
+		for i := len(args) - 1; i >= 0; i-- {
 			//Retirer le / a la fin du chemin si il y en a un
 			if args[i][len(args[i])-1:] == "/" {
 				args[i] = args[i][:len(args[i])-1]
@@ -242,20 +224,47 @@ Alias : up, u , upld`,
 				os.Exit(0)
 			}
 
-			//Progress bar pour le téléversement
-			bar := progressbar.DefaultBytes(
-				size,
-				green.Sprint("Téléversement en cours"),
-			)
-			//Ajouter un fichier au reader
-			reader, err := os.Open(args[i])
-			if err != nil {
-				red.Println(err)
-				os.Exit(0)
+			//si dans args il y a plus d'un fichier on attend de récupérer tous les fichiers pour les mettres dans un dossier
+			if len(args) > 1 {
+				// Si le dossier temporaire n'existe pas alors on le créé
+				if _, err := os.Stat(tempDir + "/free-transfert"); os.IsNotExist(err) {
+					err := os.Mkdir(tempDir+"/free-transfert", 0755)
+					if err != nil {
+						red.Println(err)
+						os.Exit(0)
+					}
+				}
+				//Executer la commande cp
+				err := exec.Command("cp", "-R" , args[i], tempDir+"/free-transfert").Run()
+
+				if err != nil {
+					red.Println(err)
+					os.Exit(0)
+				}
+				if i > 0 {
+					//Revenir au début de la boucle
+					continue
+				}
+				if i == 0 {
+					args[i] = tempDir + "/free-transfert" + ".zip"
+
+					//Archiver le dossier
+					if err := zipSource(tempDir+"/free-transfert", args[i]); err != nil {
+						red.Println(err)
+						os.Exit(0)
+					}
+					// Supprimer le dossier temporaire
+					err := os.RemoveAll(tempDir + "/free-transfert")
+					if err != nil {
+						red.Println(err)
+						os.Exit(0)
+					}
+				}
+				file, _ := os.Stat(args[i])
+				size = file.Size()
 			}
-			//Si args[i] est un dossier on le zip
-			if file.IsDir() {
-				filetype = "directory"
+			//Si c'est un dossier
+			if file.IsDir() && len(args) == 1 {
 				//si le dossier est plus gros que 50go
 				if size > 50000000000 {
 					red.Println("Erreur : Vous ne pouvez pas upload un dossier plus gros que 50Go.")
@@ -272,26 +281,20 @@ Alias : up, u , upld`,
 					args[i] = args[i] + ".zip"
 					file, _ := os.Stat(args[i])
 					size = file.Size()
-					reader, err = os.Open(args[i])
-					if err != nil {
-						red.Println(err)
-						os.Exit(0)
-					}
-					bar := progressbar.DefaultBytes(
-						size,
-						green.Sprint("Téléversement en cours"),
-					)
-					_, err = io.Copy(bar, reader)
-					if err != nil {
-						red.Println(err)
-						os.Exit(0)
-					}
-					//Supprimer définitivement le fichier
-					os.Remove(args[i])
+					// os.Remove(args[i] + ".zip")
 				}
-
 			}
-			//Ajouter le fichier dans le reader
+			//Progress bar pour le téléversement
+			bar := progressbar.DefaultBytes(
+				size,
+				green.Sprint("Téléversement"),
+			)
+			//Ajouter un fichier au reader
+			reader, err := os.Open(args[i])
+			if err != nil {
+				red.Println(err)
+				os.Exit(0)
+			}
 
 			//Faire avancer la progressbar
 			_, err = io.Copy(bar, reader)
@@ -301,15 +304,15 @@ Alias : up, u , upld`,
 			}
 			//Supprimer la progressbar
 			// fmt.Print("\033[2K\r")
-			url = "https://github.com/mdp/qrterminal"
 
-			//Enregistre les données dans un fichier d'historique si l'historique est activé
-			if vp.GetBool("cli.history") {
-				absPath, _ := filepath.Abs(args[i])                  //Chemin des fichiers
-				temp()                                               //Executer la fonction temp pour éviter les erreurs
-				historic(url, absPath, filetype, readableSize(size)) //Enregistrer dans l'historique avec l'url, le chemin du fichier, le type de fichier et la taille du fichier
-			}
 		} //Fin de la boucle for
+		url = "https://github.com/mdp/qrterminal"
+
+		//Enregistre les données dans un fichier d'historique si l'historique est activé
+		if vp.GetBool("cli.history") {
+			absPath, _ := filepath.Abs(args[i])                  //Chemin des fichiers
+			historic(url, absPath, filetype, readableSize(size)) //Enregistrer dans l'historique avec l'url, le chemin du fichier, le type de fichier et la taille du fichier
+		}
 
 		//Vérifier si il faut afficher une notification et si il le faut avec du son.
 		if vp.GetBool("cli.notify") && vp.GetBool("cli.sound") {

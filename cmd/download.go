@@ -243,7 +243,7 @@ Alias : d, dld, dl, down`,
 		}
 		bar.Clear()
 
-		if isZip {
+		if isZip && vp.GetBool("cli.unzip") {
 			Unzip(filePath, vp.GetString("cli.dld"))
 		}
 

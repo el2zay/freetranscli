@@ -6,7 +6,6 @@ import (
 	"os/exec"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -14,7 +13,7 @@ import (
 // uninstallCmd represents the uninstall command
 var uninstallCmd = &cobra.Command{
 	Use:   "uninstall",
-	Short: "Désinstalle FreTransCLI",
+	Short: "Désinstalle FreeTransCLI",
 	Run: func(cmd *cobra.Command, args []string) {
 		vp := viper.New()
 		vp.SetConfigName("config")
@@ -27,7 +26,7 @@ var uninstallCmd = &cobra.Command{
 		}
 		//Définir ftcSize comme une variable globale
 		var ftcSize int64
-		path, _ := exec.LookPath(vp.GetString("cli.command"))
+		path, _ := exec.LookPath("freetranscli")
 		//Vérifier la taille du fichier de configuration
 		config, err := os.Stat(configDir)
 		//Si il y a une erreur ne pas le calculer
@@ -70,25 +69,20 @@ var uninstallCmd = &cobra.Command{
 			bgreen.Println("Merci pour votre confiance !")
 		}
 		if choice == red.Sprintf("Oui") {
-			bar := progressbar.NewOptions64(ftcSize,
-				progressbar.OptionSetDescription(bmagenta.Sprint("Suppression de FreeTransCLI\n")),
-			)
 			if _, err := os.Stat(configDir); !os.IsNotExist(err) {
 				err := os.RemoveAll(configDir)
 				if err != nil {
 					red.Println("Erreur lors de la suppression du dossier de configuration : ", err, "PATH : ", configDir)
 					os.Exit(0)
 				}
-				bar.Add64(config.Size())
 				if _, err := os.Stat(tempDir); !os.IsNotExist(err) {
 					err := os.RemoveAll(tempDir)
-					bar.Add64(int64(temp.Size()))
 					if err != nil {
 						red.Println("Erreur lors de la suppression du dossier temporaire :", err, "PATH : ", tempDir)
 
 					}
 				}
-				path, err := exec.LookPath(vp.GetString("cli.command"))
+				path, err := exec.LookPath("freetranscli")
 				if err != nil {
 					red.Println("FreeTransCLI n'a pas été détecté sur votre système.")
 					os.Exit(0)

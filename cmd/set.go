@@ -3,7 +3,6 @@ package cmd
 import (
 	"errors"
 	"os"
-	"os/exec"
 	"runtime"
 	"strings"
 
@@ -17,8 +16,9 @@ import (
 )
 
 var (
-	tempDir        = os.TempDir() + "/FreeTransCli_temp"
-	historicfile   = os.TempDir() + "/FreeTransCli_temp/historic.yaml"
+	tempDir        = os.TempDir() + "FreeTransCLI_temp"
+	historicfile   = os.TempDir() + "FreeTransCLI_temp/historic.yaml"
+	unzipchoice    string
 	notifychoice   string
 	soundchoice    string
 	iconchoice     string
@@ -51,6 +51,11 @@ Paramétrer et personnaliser le client, pour le moment vous pouvez changer le do
 		}
 
 		for {
+			if vp.GetBool("cli.unzip") {
+				unzipchoice = "Désactiver la décompression automatique"
+			} else {
+				unzipchoice = "Activer la décompression automatique"
+			}
 			if vp.GetBool("cli.notify") {
 				notifychoice = "Désactiver les notifications"
 			} else {
@@ -101,6 +106,7 @@ Paramétrer et personnaliser le client, pour le moment vous pouvez changer le do
 					Message: "Quel paramètre ? " + color.HiBlackString("(CTRL+C pour quitter)"),
 					Options: []string{
 						"Choisir le dossier de téléchargement par défaut",
+						unzipchoice,
 						notifychoice,
 						soundchoice,
 						iconchoice,
@@ -109,29 +115,28 @@ Paramétrer et personnaliser le client, pour le moment vous pouvez changer le do
 						histchoice,
 						updatechoice,
 						notfoundchoice,
-						"Modifier le nom de la commande",
 						red.Sprint("Effacer l'historique"),
 						red.Sprint("Réinitialiser la configuration"),
-						red.Sprint("Désinstaller FreeTransCli"),
+						red.Sprint("Désinstaller FreeTransCLI"),
 					},
-					PageSize: 14,
+					PageSize: 13,
 				}
 			} else {
 				inquirer = &survey.Select{
 					Message: "Quel paramètre ?" + color.HiBlackString("(CTRL+C pour quitter)a"),
 					Options: []string{
 						"Choisir le dossier de téléchargement par défaut",
+						unzipchoice,
 						clipchoice,
 						qrchoice,
 						histchoice,
 						updatechoice,
 						notfoundchoice,
-						"Modifier le nom de la commande",
 						red.Sprint("Effacer l'historique"),
 						red.Sprint("Réinitialiser la configuration"),
-						red.Sprint("Désinstaller FreeTransCli"),
+						red.Sprint("Désinstaller FreeTransCLI"),
 					},
-					PageSize: 11,
+					PageSize: 10,
 				}
 			}
 			err := survey.AskOne(inquirer, &choice)
@@ -223,6 +228,9 @@ Paramétrer et personnaliser le client, pour le moment vous pouvez changer le do
 			// 	s.Stop()
 			// }
 
+			if choice == unzipchoice {
+				vp.Set("cli.unzip", !vp.GetBool("cli.unzip"))
+			}
 			if choice == notifychoice {
 				vp.Set("cli.notify", !vp.GetBool("cli.notify"))
 			}
@@ -270,12 +278,14 @@ Paramétrer et personnaliser le client, pour le moment vous pouvez changer le do
 					}}
 				survey.AskOne(notifinquirer, &selecticon)
 				if selecticon == "Garder cette icône" {
+					//Déplacer l'icône dans le dossier de config
+					os.Rename(iconpath, configDir+"/icon.png")
 					vp.Set("cli.icon", iconpath)
 					green.Println("L'icône a été gardée")
 					continue
 				}
 				if selecticon == "Revenir sur l'ancienne icône" {
-					green.Println("L'icône a été réinitialisée")
+					green.Println("L'icône n'a pas été changée")
 					continue
 				}
 				if selecticon == "Revenir sur l'icône par défaut" {
@@ -308,40 +318,6 @@ Paramétrer et personnaliser le client, pour le moment vous pouvez changer le do
 				vp.Set("cli.notfound", !vp.GetBool("cli.notfound"))
 			}
 
-			if choice == "Modifier le nom de la commande" {
-				freetransclipath, err := exec.LookPath("freetranscli")
-				if err == os.ErrNotExist {
-					red.Println("Erreur : Impossible de trouver freetranscli.")
-					continue
-				} else if err != nil {
-					red.Println(err)
-					continue
-				}
-				var askname string
-				prompt := &survey.Input{
-					Message: "Nouveau nom de la commande :",
-				}
-				survey.AskOne(prompt, &askname)
-				if len(askname) == 0 {
-					continue
-				}
-				//vérifier si le nom de la commande est déjà utilisé
-				_, err = exec.LookPath(askname)
-				if err == nil {
-					red.Println("Erreur : Ce nom de commande ne peut pas être utilisée", err)
-					continue
-				}
-				//renommer la commande en remplaçant freetranscli par le nouveau nom
-				newname := strings.Replace(freetransclipath, "freetranscli", askname, 1)
-				err = os.Rename(freetransclipath, newname)
-				if err != nil {
-					red.Println("Erreur : Impossible de renommer la commande", err)
-					continue
-				}
-				green.Println("La commande a été renommée")
-				vp.Set("cli.command", askname) //changer le nom de la commande dans le fichier de config
-			}
-
 			if choice == red.Sprint("Effacer l'historique") {
 				file, err := os.Stat(historicfile)
 				if errors.Is(err, os.ErrNotExist) {
@@ -354,6 +330,7 @@ Paramétrer et personnaliser le client, pour le moment vous pouvez changer le do
 				}
 				survey.AskOne(prompt, &delchoice)
 				if delchoice {
+					err := os.Remove(historicfile)
 					if err != nil {
 						red.Println("Erreur : Impossible d'effacer l'historique")
 						continue
@@ -385,7 +362,7 @@ Paramétrer et personnaliser le client, pour le moment vous pouvez changer le do
 					continue
 				}
 			}
-			if choice == red.Sprint("Désinstaller FreeTransCli") {
+			if choice == red.Sprint("Désinstaller FreeTransCLI") {
 				uninstallCmd.Run(uninstallCmd, []string{})
 			}
 			err = vp.WriteConfig()

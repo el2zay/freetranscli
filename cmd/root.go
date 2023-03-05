@@ -54,6 +54,16 @@ func Conf() {
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		os.Create(configFilePath)
 	}
+
+	//Si il n'y a pas de dossier temporaire, on en crée un
+	if _, err := os.Stat(tempDir); os.IsNotExist(err) {
+		os.Mkdir(tempDir, 0777)
+	}
+
+	//Créer un fichier historic.yaml
+	if _, err := os.Stat(tempDir + "/historic.yaml"); os.IsNotExist(err) {
+		os.Create(tempDir + "/historic.yaml")
+	}
 	vp := viper.New()
 
 	//Définir le chemin de téléchargement par défaut
@@ -75,7 +85,8 @@ func Conf() {
 		"cli.history":   true,
 		"cli.update":    true,
 		"cli.lastmsg":   "",
-		"cli.command":   os.Args[0],
+		"cli.notfound":  true,
+		"cli.unzip":     true,
 	}
 
 	// Lit la configuration existante
@@ -152,15 +163,15 @@ func init() {
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetHelpTemplate(`
 Usage:
-      {{.UseLine}} [commande]
+      {{.Use}} [commande]
 
 Commandes:
       download/d    Télécharger un fichier depuis FreeTransfert grâce à l'url du fichier
       help          Aide à propos d'une commande
       history       Affiche l'historique des fichiers téléversés
       issue         Ouvre une issue sur GitHub
-      set/config    Paramétrer FreeTransCli
-      uninstall     Désinstaller FreeTransCli
+      set/config    Paramétrer FreeTransCLI
+      uninstall     Désinstaller FreeTransCLI
       upload/u      Téléverser un fichier sur FreeTransfert grâce au chemin du fichier
 `)
 
